@@ -2,30 +2,35 @@
 {% load static %}
 
 {% block content %}
-<div class="row ">
-    <div class="col-lg-12" >
+<div class="row " >
+    <div class="col-lg-12">
+        
         <a href="{% url 'store:new' %}" style="text-decoration: none;">
-    <div class="column" style="background-image: url('/static/images/fireworks.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat;">
-       <span>
-    <h1 style="font-size: 100px;">NEW</h1>
-    <h1 style="font-size: 100px;"> ARRIVALS</h1>
-</span>
-    </div>
-</a>
+            <div class="column"
+                style="
+                background-image: url('/static/images/new.png'); background-size:cover; background-position:center; background-repeat: no-repeat;">
+             
+            </div>
+        </a>
 
-    {% for cat in categories %}
-    <a href=" {% url 'store:cat' slug=cat.slug %} ">
-    <div class="column" style="background-image: url('{{cat.background.url}}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
-        <span>
-    <h1 style="font-size: 100px;"> {{cat.name1}} </h1>
-    <h1 style="font-size: 100px;"> {{cat.name2}} </h1>
-</span>
+
+
+        {% for cat in categories %}
+            <a href=" {% url 'store:cat' slug=cat.slug %} ">
+                <div class="column" 
+                    style=" background-image: url('{{cat.background.url}}'); background-size: cover; background-position: center; background-repeat: no-repeat; display: inline-block;">
+                    <span>
+                        <h1 style="font-size: 78px;" > {{cat.name1}} </h1>
+                        <br>
+                        <h1 style="font-size: 78px;"> {{cat.name2}} </h1>
+                    </span>
+                </div>
+            </a>
+        {% endfor %}
+
     </div>
-</a>
-    {% endfor %}
+
 </div>
-
-  </div>
 
 
 {% endblock %}

@@ -4,6 +4,9 @@ from .models import *
 from django.http import HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
 from django.db  import IntegrityError
+import random
+from django.views.decorators.clickjacking import xframe_options_sameorigin
+
 # Create your views here.
 
 
@@ -27,7 +30,7 @@ def login_request(request):
     else:
 
         return render(request, 'base/login.html')
-    
+
 
 def registration_request(request):
     if request.method =='POST':
@@ -62,23 +65,30 @@ def registration_request(request):
     return render(request, 'base/register.html', context)
 
 
+def logout_request(request):
+    logout(request)
+    return HttpResponseRedirect(reverse('store:store'))
 
 
 def store(request):
     if request.user.is_authenticated:
-            
+
         products = Product.objects.all()
         customer =  Customer.objects.get(user = request.user)
         customer_cart, created = Cart.objects.get_or_create(customer = customer)
-        context = {'products': products, 'customer': customer, 'customer_cart': customer_cart}
+        cat = Category.objects.all()[:5]
+        context = {'products': products, 'customer': customer, 'customer_cart': customer_cart, 'cat':cat}
+        
+
         return render(request, 'base/store.html', context)
     else:
         products = Product.objects.all()
+        cat = Category.objects.all()[:5]
 
 
-        context={'products': products}
+        context={'products': products, 'cat':cat}
         return render(request, 'base/store.html', context)
-    
+
 def category(request):
     if request.user.is_authenticated:
         customer =  Customer.objects.get(user = request.user)
@@ -91,32 +101,74 @@ def category(request):
         categories = Category.objects.all()
         context = {'categories': categories}
         return render(request, 'base/category.html', context)
-    
+
 def new(request):
-    
+    if request.user.is_authenticated:
+
         customer =  Customer.objects.get(user = request.user)
         customer_cart, created = Cart.objects.get_or_create(customer = customer)
-        products = Product.objects.all().order_by('-time_added')
+        products = Product.objects.all().order_by('-time_added')[:20]
         context = {'products':products, 'customer':customer, 'customer_cart': customer_cart}
         return render(request, 'base/new.html', context)
-            
-
+    else:
+        products = Product.objects.all().order_by('-time_added')[:20]
+        context = {'products':products}
+        return render(request, 'base/new.html', context)
 
 def cat(request, slug):
     if request.user.is_authenticated:
         customer =  Customer.objects.get(user = request.user)
         customer_cart, created = Cart.objects.get_or_create(customer = customer)
         cat = Category.objects.get(slug = slug)
-        product = Product.objects.filter(categories = cat)
+        product = Product.objects.filter(categories = cat).order_by('-time_added')
         context = {'products':product, 'cat': cat, 'customer':customer, 'customer_cart': customer_cart}
         return render(request, 'base/cat.html', context)
     else:
-        context = {}
+        cat = Category.objects.get(slug = slug)
+        product = Product.objects.filter(categories = cat)
+        context = {'products':product, 'cat': cat}
         return render(request, 'base/cat.html', context)
 
+@xframe_options_sameorigin
+def test(request, catslug):
+    if request.user.is_authenticated:
+        cat = Category.objects.get(slug = catslug)
+
+        products = Product.objects.filter(categories = cat)[:10]
+        context = {'products':products, 'cat':cat}
+        return render(request, 'base/test.html', context)
+    else:
+        return HttpResponseRedirect(reverse('store:login'))
+
+@xframe_options_sameorigin
+def catframe(request):
+    if request.user.is_authenticated:
+
+        cat = Category.objects.all()[:10]
+        context = {'cat':cat}
+        return render(request, 'base/catframe.html', context)
+    else:
+        return HttpResponseRedirect(reverse('store:login'))
+    
+def product(request, catslug, prodslug):
+    if request.user.is_authenticated:
+        customer = Customer.objects.get(user = request.user)
+        products = Product.objects.get(slug = prodslug)
+
+        if catslug == 'none':
+            cat = products.categories.first()
+        else:
+
+            cat = Category.objects.get(slug = catslug)
+
+        context ={'customer': customer, 'cat': cat, 'product':products}
+        return render (request, 'base/product.html', context)
+    else:
+        context = {}
+        return render(request, 'base/product.html', context)
 def cart(request):
     if request.user.is_authenticated:
-            
+
         customer =  Customer.objects.get(user = request.user)
         customer_cart, created = Cart.objects.get_or_create(customer = customer)
         customer_cart.save()
@@ -128,23 +180,23 @@ def cart(request):
             price = item.item.price
             quantity = item.quantity
             item.ppi = price * quantity
-           
+
             total += item.ppi
         customer_cart.total_cost = total
         customer_cart.save()
-     
-  
+
+
         context = {'customer': customer, 'total':total, 'items':items, 'customer_cart': customer_cart}
         return render(request, 'base/cart.html', context)
     else:
         return HttpResponseRedirect(reverse('store:login'))
-    
+
 
 def update(request, id, do):
     if request.user.is_authenticated:
         cart = Cart.objects.get(customer = Customer.objects.get(user = request.user))
         item = CartItem.objects.get(id = id)
-     
+
         if do == 'up':
             item.quantity +=1
             cart.total_item += 1
@@ -158,13 +210,15 @@ def update(request, id, do):
             return HttpResponseRedirect(reverse('store:cart'))
 
         return HttpResponseRedirect(reverse('store:cart'))
+    else:
+        return HttpResponseRedirect(reverse('store:login'))
 
 
 
 
 def checkout(request):
     if request.user.is_authenticated:
-            
+
         customer =  Customer.objects.get(user = request.user)
         customer_cart, created = Cart.objects.get_or_create(customer = customer)
         customer_cart.save()
@@ -176,24 +230,24 @@ def checkout(request):
             price = item.item.price
             quantity = item.quantity
             item.ppi = price * quantity
-           
+
             total += item.ppi
         shipping = ShippingInformation.objects.filter(customer = customer)
-     
-  
+
+
         context = {'customer': customer, 'total':total, 'shipping':shipping, 'items':items, 'customer_cart': customer_cart}
         return render(request, 'base/checkout.html', context)
     else:
         return HttpResponseRedirect(reverse('store:login'))
-    
 
-def add_to_cart(request, id, go, catid):
-    
+
+def add_to_cart(request, id, go, catslug):
+
     if request.user.is_authenticated:
         request.method == 'POST'
         customer = Customer.objects.get(user = request.user)
         customer_cart, created = Cart.objects.get_or_create(customer = customer)
-        products = Product.objects.all()
+        products = Product.objects.all().order_by('-time_added')
         product = Product.objects.get(id = id)
         item, created = CartItem.objects.get_or_create(cart = customer_cart, item = product)
         item.quantity += 1
@@ -204,36 +258,52 @@ def add_to_cart(request, id, go, catid):
 
         msg = 'WAS ADDED TO CARD'
 
-        if go == 'store':
+        if go == 'prod':
+            cat = Category.objects.get(slug = catslug)
+            product = Product.objects.get(id = id)
 
-            context = {'products': products, 'product':product, 'msg':msg, 'customer': customer, 'customer_cart': customer_cart}
-            return render(request, 'base/store.html', context)
+            context = {'cat':cat, 'products': products, 'product':product, 'msg':msg, 'customer': customer, 'customer_cart': customer_cart}
+            return render(request, 'base/product.html', context)
         if go == 'cat':
             customer =  Customer.objects.get(user = request.user)
             customer_cart, created = Cart.objects.get_or_create(customer = customer)
-            cat = Category.objects.get(id = catid)
-            product = Product.objects.filter(categories = cat)
+            cat = Category.objects.get(slug = catslug)
+            product = Product.objects.filter(categories = cat).order_by('-time_added')
             prod = Product.objects.get(id = id)
             msg = 'WAS ADDED TO CARD'
             context = {'products':product, 'prod':prod, 'cat': cat, 'customer':customer, 'customer_cart': customer_cart, 'msg':msg}
-            
+
             return render(request, 'base/cat.html', context)
         if go == 'new':
+             
             customer =  Customer.objects.get(user = request.user)
             customer_cart, created = Cart.objects.get_or_create(customer = customer)
             products = Product.objects.all().order_by('-time_added')
             prod = Product.objects.get(id = id)
+            if catslug == 'none':
+                cat = product.categories.first()
             msg = 'WAS ADDED TO CART'
             context = {'products':products, 'prod':prod, 'customer':customer, 'customer_cart': customer_cart, 'msg':msg}
             return render(request, 'base/new.html', context)
-            
+
 
 
     else:
         return HttpResponseRedirect(reverse('store:login'))
+    
+def details(request, catslug, prodslug):
+    if request.user.is_authenticated:
+        customer = Customer.objects.get(user = request.user)
+        customer_cart = Cart.objects.get(customer = customer)
+        cat = Category.objects.get(slug = catslug)
+        product = Product.objects.get(slug = prodslug)
+        context = {'cat':cat, 'product':product, 'customer':customer, 'customer_cart':customer_cart}
+        return render(request, 'base/details.html', context)
+    else:
+        return HttpResponseRedirect(reverse('store:login'))
 
-       
-        
+
+
 def payment(request, tfid):
     if request.user.is_authenticated:
         customer = Customer.objects.get(user =  request.user)
@@ -246,16 +316,18 @@ def payment(request, tfid):
             price = item.item.price
             quantity = item.quantity
             item.ppi = price * quantity
-           
+
             total += item.ppi
         ship = ShippingInformation.objects.get(id = tfid)
+        order_id = random.randint(2222222222222222,9999999999999999)
 
-        context = {'customer': customer, 'customer_cart': customer_cart, 'ship':ship, 'total': total}
+
+        context = {'customer': customer, 'customer_cart': customer_cart, 'ship':ship, 'total': total, 'order_id':order_id}
         return render(request, 'base/payment.html', context)
     else:
         return HttpResponseRedirect(reverse('store:login'))
-        
-    
+
+
 def order(request, tfid):
     if request.user.is_authenticated:
 
@@ -276,6 +348,55 @@ def order(request, tfid):
     else:
         return HttpResponseRedirect(reverse('store:login'))
 
+def order_test(request, ship_id):
+    if request.user.is_authenticated:
+
+        customer = Customer.objects.get(user = request.user)
+        cart = Cart.objects.get(customer = customer)
+        items = CartItem.objects.filter(cart = cart)
+        ship = ShippingInformation.objects.get(id = ship_id)
+        total = cart.total_cost
+        details = ''
+        status = request.GET['status']
+        if status == 'successful':
+            transaction_id =request.GET['transaction_id']
+            tx_ref = request.GET['tx_ref']
+
+            for item in items:
+                it = f'   "{str(item.quantity)}  {str(item.item.name)}"  '
+                details += str(it)
+            new_order = Order.objects.create(customer = customer, details =
+                                         details, ship = ship, total = total )
+            new_order.save()
+            return HttpResponseRedirect(reverse('store:order_status', args=(ship_id, status, transaction_id,tx_ref)))
+        else:
+            transaction_id=None
+            status = request.GET['status']
+            tx_ref = request.GET['tx_ref']
+
+
+            context = {'status':status, 'tx_ref':tx_ref, 'transaction_id' : transaction_id, 'customer_cart':cart}
+            return render(request, 'base/order_test.html', context)
+    else:
+        return HttpResponseRedirect(reverse('store:login'))
+
+def order_status(request, ship_id, status, transaction_id, tx_ref):
+    if request.user.is_authenticated:
+        customer = Customer.objects.get(user = request.user)
+
+        customer_cart = Cart.objects.get(customer = customer)
+        status = status
+        transaction_id = transaction_id
+        tx_ref = tx_ref
+
+        context={'status':status, 'tx_ref':tx_ref, 'transaction_id':transaction_id, 'customer_cart' :customer_cart, 'customer':customer}
+        return render(request, 'base/order_test.html', context)
+    else:
+        return HttpResponseRedirect(reverse('store:login'))
+
+
+
+
 def create_shipping(request):
     if request.user.is_authenticated:
 
@@ -287,7 +408,7 @@ def create_shipping(request):
         city = request.POST['city']
         state = request.POST['state']
         number = request.POST['number']
-        new_ship = ShippingInformation.objects.create(customer = customer, street = str(address), local_government_area = 
+        new_ship = ShippingInformation.objects.create(customer = customer, street = str(address), local_government_area =
                                                       str(lga), city = str(city), state = str(state), mobile = int(number))
         new_ship.save()
         return HttpResponseRedirect(reverse('store:checkout'))
@@ -304,13 +425,13 @@ def change(request):
         last = request.POST['lname']
         email = request.POST['email']
         customer.first_name = first
-        customer.last_name = last 
+        customer.last_name = last
         customer.email = email
         customer.save()
         return HttpResponseRedirect(reverse('store:checkout'))
     else:
         return HttpResponseRedirect(reverse('store:login'))
-    
+
 def empty(request):
     if request.user.is_authenticated:
 
@@ -324,22 +445,18 @@ def empty(request):
             return HttpResponseRedirect(reverse('store:cart'))
     else:
         return HttpResponseRedirect(reverse('store:login'))
-    
+
 def profile(request):
     if request.user.is_authenticated:
         customer = Customer.objects.get(user = request.user)
         customer_cart = Cart.objects.get(customer = customer)
-        orders = Order.objects.filter(customer = customer).order_by('-time')
+        orders = Order.objects.filter(customer = customer).order_by('-time')[:10]
         shippings = ShippingInformation.objects.filter(customer = customer)
         context = {'customer': customer, 'customer_cart':customer_cart, 'orders':orders , 'shippings':shippings}
         return render(request, 'base/profile.html', context)
     else:
         return HttpResponseRedirect(reverse('store:login'))
-    
 
 
-    
 
-def logout_request(request):
-    logout(request)
-    return HttpResponseRedirect(reverse('store:store'))
+

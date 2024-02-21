@@ -32,6 +32,8 @@ class Product(models.Model):
     picture2 = models.ImageField(null=True, blank=True)
     categories = models.ManyToManyField(Category)
     time_added = models.DateTimeField(null =True, blank = True, auto_now_add = True)
+    slug = models.SlugField(default = 'un-named')
+    details = models.CharField(max_length = 2000, default = '')
 
 
     def __str__(self):

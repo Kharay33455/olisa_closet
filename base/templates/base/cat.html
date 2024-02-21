@@ -32,13 +32,12 @@
         <hr>
         <!--add to cart functionality-->
         
-            <a href="{% url 'store:add' id=product.id go='cat' catid=cat.id %}">
+            <a href="{% url 'store:add' id=product.id go='cat' catslug=cat.slug %}">
         <button class="btn btn-outline-secondary add-btn">
         Add to Cart</button>
     </a>
-    {% if product.picture1 %}
-    <a class="btn btn-outline-success" href="{{product.picture1.url}}">
-        {% endif %} View</a></a>
+    <a class="btn btn-outline-success" href="{% url 'store:product' catslug=cat.slug prodslug=product.slug %}">
+        View</a>
         <p style="display: inline-block; float: right; color: rgba(0, 128, 255, 0.6);"><strong>{{product.price}}
                 Naira Only.</strong></p>
         

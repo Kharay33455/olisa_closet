@@ -34,7 +34,28 @@
         </span><br> <br>
 
           <p class="btn btn-block btn-outline-success" style="width: 100%;" >2093448231 </p> <br> <br>
-            <a  class="btn btn-outline-dark" href="{% url 'store:order' tfid=ship.id %}" style="width: 100%;"> I have completed this payment.</a> <br> <br>
+
+
+
+          <form method="POST" action="https://checkout.flutterwave.com/v3/hosted/pay">
+            <div>
+              Your order is N{{total}}
+            </div>
+            <input type="hidden" name="public_key" value="FLWPUBK_TEST-02b9b5fc6406bd4a41c3ff141cc45e93-X" />
+            <input type="hidden" name="customer[email]" value="{{customer.email}}" />
+            <input type="hidden" name="customer[name]" value="{{customer.name}}" />
+            <input type="hidden" name="tx_ref" value="txref-8023" />
+            <input type="hidden" name="amount" value="{{total}}" />
+            <input type="hidden" name="currency" value="NGN" />
+            <input type="hidden" name="meta[source]" value="docs-html-test" />
+            <input type="hidden" name="redirect_url" value="http://localhost/6/transfer/" />
+
+            <br>
+            <button type="submit" id="start-payment-button">Pay Now</button>
+          </form>
+          
+
+
         </div>
     </div>
 </div>

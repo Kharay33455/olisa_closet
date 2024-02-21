@@ -14,14 +14,29 @@
 <body>
 
 	<nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="position: fixed; top: 0; width: 100%; z-index: 3;">
-	  <a class="navbar-brand" href="{% url 'store:store' %}"> <img class="logo" src="{% static 'images/home.png' %}" /></a>
+	  <a class="navbar-brand" href="{% url 'store:store' %}"> <img class="logo" src="{% static 'images/back.png' %}"></a>
+	   <div style="position: relative; display: inline-flex; padding-right: 12%;" >
+
+		<a href="{% url 'store:cart' %}">
+			<img id="cart-icon"  src="{% static 'images/cart.png' %}">
+		</a>
+
+        {% if customer_cart.total_item %}
+		<p class="cart-total" > &nbsp;{{customer_cart.total_item}}</p>
+		{% else %}
+		<p class = "cart-total">0</p>
+        {% endif %}
+
+
+	  </div>
+
 	  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 	    <span class="navbar-toggler-icon"></span>
 	  </button>
-	
+
 
 	  <div class="collapse navbar-collapse" id="navbarSupportedContent">
-	
+
 	    <ul class="navbar-nav mr-auto">
 	      <li class="nav-item active">
 	        <a class="nav-link" href="{% url 'store:store' %}">Store <span class="sr-only">(current)</span></a>
@@ -32,18 +47,18 @@
 		  <li class="nav-item">
 			<a class="nav-link" href="{% url 'store:profile' %}"><span class="nav-text">Profile</span></a>
 		  </li>
-	 
-	 
+
+
 	    </ul>
 
 		{% if request.user.is_authenticated %}
 		<div class="form-inline my-2 my-lg-0">
 			<a href="{% url 'store:profile' %}"class="btn btn-warning">{{customer.user.username}}</a>
-		
+
 	   </div>
 	   <div class="form-inline my-2 my-lg-0">
 		<a href="{% url 'store:logout' %}"class="btn btn-warning" style="background-color: red; color: wheat;" >Logout</a>
-	
+
    </div>
 	   {% else %}
 
@@ -51,32 +66,25 @@
 
 	    <div class="form-inline my-2 my-lg-0">
 	     	<a href="{% url 'store:login' %}"class="btn btn-warning">Login</a>
-	     
+
 	    </div>
 		{% endif %}
 	  </div>
-	  <div>
-			
-		<a href="{% url 'store:cart' %}">
-			<img class="form-inline my-2 my-lg-0"  id="cart-icon" src="{% static 'images/cart.png' %}">
-		</a>
-		<p id="cart-total">{{customer_cart.total_item}}</p>
 
-	  </div>
-	
 	</nav>
-	
 
-	<div  style="width: 100%; height: 150px; position: fixed; margin-top: 50%; opacity: 1;" >
-		<img style="width: 100%;" src="{% static 'images/back.png' %}"><br>
+
+	<div  style="width: 100%; height: 150px; position: fixed; margin-top: 70%; opacity: 1;" >
 		<marquee behavior="" direction="">
-		<p style="text-align: center; font-size: xx-large; font-style: italic; font-family: 'Times New Roman', Times, serif;" >Let your style speak for you...</p>
+		<p style="text-align: center; font-size: large; font-style: italic; font-family: 'Times New Roman', Times, serif;" >Let your style speak for you...</p>
 	</marquee>
 	</div>
 
-<br><br><br>
-     <div >
-            <br>
+<br><br>
+     <div style="margin-top: 2%;" >
+       <div style="text-align: center; background-color: black; color: white; width: 100%;  " >
+		 CALL TO ORDER: +234-810 284 9496
+	</div>
             {% block content %}
 
 

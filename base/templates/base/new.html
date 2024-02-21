@@ -30,12 +30,12 @@
         <hr>
         <!--add to cart functionality-->
         
-            <a href="{% url 'store:add' id=product.id go='new' catid=0 %}">
+            <a href="{% url 'store:add' id=product.id go='new' catslug='none' %}">
         <button class="btn btn-outline-secondary add-btn">
         Add to Cart</button>
     </a>
     {% if product.picture1 %}
-        <a class="btn btn-outline-success" href="{{product.picture1.url}}">
+        <a class="btn btn-outline-success" href="{% url 'store:product' catslug='none' prodslug=product.slug %}">
             {% endif %} View</a>
 
         <p style="display: inline-block; float: right; color: rgba(0, 128, 255, 0.6);"><strong>{{product.price}}
