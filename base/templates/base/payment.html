@@ -13,28 +13,8 @@
 
         <div >
             <h3> {{total}} Naira only.</h3>
-            Open your mobile app on your mobile phone or dial your bank USSD code to complete payment.
+            Open your mobile app on your mobile phone, dial your bank USSD code or use your debit card to complete your payment next.
             <p style="color: rgb(50, 100, 200); z-index: 2;" >Please use your personal bank account</p>
-            <span class="btn btn-outline-dark" >
-            Bank Name:
-        </span>
-            <p> <br>
-            <b class="btn btn-success">United Bank Of Africa</b>
-        </p>
-        <span class="btn btn-outline-dark">
-            Account Name:
-        </span>
-            <p> <br>
-            <b class="btn btn-success">Olisa Ibidun</b>
-        </p>
-        <span class="btn btn-outline-dark">
-            
-            Account Number:
-            
-        </span><br> <br>
-
-          <p class="btn btn-block btn-outline-success" style="width: 100%;" >2093448231 </p> <br> <br>
-
 
 
           <form method="POST" action="https://checkout.flutterwave.com/v3/hosted/pay">
@@ -51,7 +31,7 @@
             <input type="hidden" name="redirect_url" value="http://localhost/6/transfer/" />
 
             <br>
-            <button type="submit" id="start-payment-button">Pay Now</button>
+            <button class="btn btn-success btn-block" type="submit" id="start-payment-button">Pay Now</button>
           </form>
           
 

@@ -78,7 +78,7 @@ def store(request):
         customer_cart, created = Cart.objects.get_or_create(customer = customer)
         cat = Category.objects.all()[:5]
         context = {'products': products, 'customer': customer, 'customer_cart': customer_cart, 'cat':cat}
-        
+
 
         return render(request, 'base/store.html', context)
     else:
@@ -134,11 +134,16 @@ def test(request, catslug):
     if request.user.is_authenticated:
         cat = Category.objects.get(slug = catslug)
 
-        products = Product.objects.filter(categories = cat)[:10]
+        products = Product.objects.filter(categories = cat).order_by('-time_added')[:10]
         context = {'products':products, 'cat':cat}
         return render(request, 'base/test.html', context)
     else:
-        return HttpResponseRedirect(reverse('store:login'))
+
+        cat = Category.objects.get(slug = catslug)
+
+        products = Product.objects.filter(categories = cat).order_by('-time_added')[:10]
+        context = {'products':products, 'cat':cat}
+        return render(request, 'base/test.html', context)
 
 @xframe_options_sameorigin
 def catframe(request):
@@ -148,8 +153,10 @@ def catframe(request):
         context = {'cat':cat}
         return render(request, 'base/catframe.html', context)
     else:
-        return HttpResponseRedirect(reverse('store:login'))
-    
+        cat = Category.objects.all()[:10]
+        context = {'cat':cat}
+        return render(request, 'base/catframe.html', context)
+
 def product(request, catslug, prodslug):
     if request.user.is_authenticated:
         customer = Customer.objects.get(user = request.user)
@@ -164,8 +171,16 @@ def product(request, catslug, prodslug):
         context ={'customer': customer, 'cat': cat, 'product':products}
         return render (request, 'base/product.html', context)
     else:
-        context = {}
-        return render(request, 'base/product.html', context)
+        products = Product.objects.get(slug = prodslug)
+
+        if catslug == 'none':
+            cat = products.categories.first()
+        else:
+
+            cat = Category.objects.get(slug = catslug)
+
+        context ={'cat': cat, 'product':products}
+        return render (request, 'base/product.html', context)
 def cart(request):
     if request.user.is_authenticated:
 
@@ -259,8 +274,13 @@ def add_to_cart(request, id, go, catslug):
         msg = 'WAS ADDED TO CARD'
 
         if go == 'prod':
-            cat = Category.objects.get(slug = catslug)
             product = Product.objects.get(id = id)
+            if catslug == 'none':
+                cat = product.categories.first()
+            else:
+
+                cat = Category.objects.get(slug = catslug)
+            
 
             context = {'cat':cat, 'products': products, 'product':product, 'msg':msg, 'customer': customer, 'customer_cart': customer_cart}
             return render(request, 'base/product.html', context)
@@ -275,7 +295,7 @@ def add_to_cart(request, id, go, catslug):
 
             return render(request, 'base/cat.html', context)
         if go == 'new':
-             
+
             customer =  Customer.objects.get(user = request.user)
             customer_cart, created = Cart.objects.get_or_create(customer = customer)
             products = Product.objects.all().order_by('-time_added')
@@ -285,12 +305,23 @@ def add_to_cart(request, id, go, catslug):
             msg = 'WAS ADDED TO CART'
             context = {'products':products, 'prod':prod, 'customer':customer, 'customer_cart': customer_cart, 'msg':msg}
             return render(request, 'base/new.html', context)
+        else:
+            customer =  Customer.objects.get(user = request.user)
+            customer_cart, created = Cart.objects.get_or_create(customer = customer)
+            products = Product.objects.filter(name__icontains=go)
+            prod = Product.objects.get(id = id)
+            if catslug == 'none':
+                cat = product.categories.first()
+            msg = 'WAS ADDED TO CART'
+            context = {'products':products, 'prod':prod, 'customer':customer, 'customer_cart': customer_cart, 'msg':msg}
+            return render(request, 'base/search.html', context)
+
 
 
 
     else:
         return HttpResponseRedirect(reverse('store:login'))
-    
+
 def details(request, catslug, prodslug):
     if request.user.is_authenticated:
         customer = Customer.objects.get(user = request.user)
@@ -460,3 +491,25 @@ def profile(request):
 
 
 
+def search(request):
+    if request.method == 'POST':
+
+        if request.user.is_authenticated:
+            customer = Customer.objects.get(user =  request.user)
+            customer_cart = Cart.objects.get(customer = customer)
+            search = request.POST['search']
+            search = str(search)
+            products = Product.objects.filter(name__icontains=search)
+            cats = Category.objects.filter(name1__icontains = search)
+            cats2 = Category.objects.filter(name2__icontains = search)
+            context = {'customer': customer, 'customer_cart': customer_cart, 'search':search, 'products':products, 'cats': cats, 'cats2':cats2}
+            return render(request, 'base/search.html', context)
+
+        else:
+            
+            search = request.POST['search']
+            products = Product.objects.filter(name__icontains=search)
+            cats = Category.objects.filter(name1__icontains = search)
+            cats2 = Category.objects.filter(name2__icontains = search)
+            context = {'search':search, 'products':products, 'cats':cats, 'cats2':cats2}
+            return render(request, 'base/search.html', context)
